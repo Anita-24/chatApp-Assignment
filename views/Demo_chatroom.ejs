@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat app</title>
+  </head>
+
+  <body>
+    <h1
+      style="
+        border: 1px solid rgb(228, 234, 250);
+        text-align: center;
+        border-radius: 10px;
+        background-color: aliceblue;
+      "
+    >
+      DEMO CHAT ROOM
+    </h1>
+    <div id="typing"></div>
+    <div id="message" style="margin: 4px; display: flex;flex-direction: column;
+    align-items: center;"" >
+    <input
+      style="height: 20px; width: 400px"
+      onfocus="typing()"
+      type="text"
+      name="message"
+      id="msg"
+      placeholder="Type your message.."
+    />
+    <br />
+    <br />
+    <button
+      style="border: 2px solid rgb(49, 49, 53); height: 30px; width: 200px"
+      type="button"
+      onclick="emitMessage()"
+    >
+      Enter to send
+    </button>
+  </body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const emitMessage = function () {
+      const messageElement = document.querySelector("#msg");
+      const message = messageElement.value;
+      messageElement.value = "";
+      if (message.length > 0) {
+        socket.emit("message", { message, from: "<%=username%>" });
+      }
+    };
+
+    const socket = io();
+    const text = document.createElement("h5");
+    const users = [];
+
+    const typing = function () {
+      const input = document.querySelector("#msg");
+      input.addEventListener("keydown", (e) => {
+        socket.emit("typing", {
+          data: "<%=username%> is typing...",
+        });
+      });
+    };
+
+    socket.on("typing", (data) => {
+      text.innerText = `${data.data}`;
+      document.querySelector("#typing").appendChild(text);
+      setTimeout(() => {
+        text.innerText = "";
+      }, 4000);
+    });
+
+    socket.on("message", ({ message, from }) => {
+      const messageBox = document.createElement("div");
+      messageBox.innerHTML = `<p><span><strong>${from} : </strong></span>${message}</p>
+      `;
+      document.querySelector("#message").appendChild(messageBox);
+    });
+
+    socket.on("Room_joined", (username) => {
+      const new_user = username.toLowerCase();
+      const index = users.indexOf(new_user);
+      if (index == -1) {
+        users.push(new_user);
+        let ele = document.createElement("h3");
+        ele.innerText = `${username} has joined`;
+        ele.style.color = "red";
+        document.querySelector("#message").appendChild(ele);
+      }
+    });
+  </script>
+</html>
